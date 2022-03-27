@@ -1,0 +1,20 @@
+# permissions for end users to view kboes.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kbo-viewer-role
+rules:
+- apiGroups:
+  - apps.operator.kb.cx
+  resources:
+  - kboes
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - apps.operator.kb.cx
+  resources:
+  - kboes/status
+  verbs:
+  - get

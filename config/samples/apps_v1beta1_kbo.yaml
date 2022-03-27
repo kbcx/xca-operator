@@ -1,0 +1,6 @@
+apiVersion: apps.operator.kb.cx/v1beta1
+kind: Kbo
+metadata:
+  name: kbo-sample
+spec:
+  # TODO(user): Add fields here
