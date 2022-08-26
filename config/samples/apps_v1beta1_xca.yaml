@@ -1,0 +1,6 @@
+apiVersion: apps.xca.k8s.kb.cx/v1beta1
+kind: Xca
+metadata:
+  name: xca-sample
+spec:
+  # TODO(user): Add fields here

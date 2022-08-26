@@ -1,20 +1,20 @@
-# permissions for end users to view kboes.
+# permissions for end users to view xcas.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: kbo-viewer-role
+  name: xca-viewer-role
 rules:
 - apiGroups:
-  - apps.operator.kb.cx
+  - apps.xca.k8s.kb.cx
   resources:
-  - kboes
+  - xcas
   verbs:
   - get
   - list
   - watch
 - apiGroups:
-  - apps.operator.kb.cx
+  - apps.xca.k8s.kb.cx
   resources:
-  - kboes/status
+  - xcas/status
   verbs:
   - get

@@ -71,7 +71,9 @@ var _ = BeforeSuite(func() {
 		},
 	}
 
-	cfg, err := testEnv.Start()
+	var err error
+	// cfg is defined in this file globally.
+	cfg, err = testEnv.Start()
 	Expect(err).NotTo(HaveOccurred())
 	Expect(cfg).NotTo(BeNil())
 
@@ -100,7 +102,7 @@ var _ = BeforeSuite(func() {
 	})
 	Expect(err).NotTo(HaveOccurred())
 
-	err = (&Kbo{}).SetupWebhookWithManager(mgr)
+	err = (&Xca{}).SetupWebhookWithManager(mgr)
 	Expect(err).NotTo(HaveOccurred())
 
 	//+kubebuilder:scaffold:webhook

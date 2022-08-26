@@ -23,42 +23,44 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// KboSpec defines the desired state of Kbo
-type KboSpec struct {
+// XcaSpec defines the desired state of Xca
+type XcaSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of Kbo. Edit kbo_types.go to remove/update
+	// Foo is an example field of Xca. Edit xca_types.go to remove/update
 	Foo string `json:"foo,omitempty"`
 }
 
-// KboStatus defines the observed state of Kbo
-type KboStatus struct {
+// XcaStatus defines the observed state of Xca
+type XcaStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+	Active         bool         `json:"active,omitempty"`
+	LastUpdateTime *metav1.Time `json:"last_update_time"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// Kbo is the Schema for the kboes API
-type Kbo struct {
+// Xca is the Schema for the xcas API
+type Xca struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   KboSpec   `json:"spec,omitempty"`
-	Status KboStatus `json:"status,omitempty"`
+	Spec   XcaSpec   `json:"spec,omitempty"`
+	Status XcaStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 
-// KboList contains a list of Kbo
-type KboList struct {
+// XcaList contains a list of Xca
+type XcaList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []Kbo `json:"items"`
+	Items           []Xca `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&Kbo{}, &KboList{})
+	SchemeBuilder.Register(&Xca{}, &XcaList{})
 }

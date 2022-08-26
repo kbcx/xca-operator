@@ -22,6 +22,7 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -30,7 +31,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	appsv1beta1 "github.com/kbcx/operator/api/v1beta1"
+	appsv1beta1 "github.com/kbcx/xca-operator/api/v1beta1"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -58,7 +59,9 @@ var _ = BeforeSuite(func() {
 		ErrorIfCRDPathMissing: true,
 	}
 
-	cfg, err := testEnv.Start()
+	var err error
+	// cfg is defined in this file globally.
+	cfg, err = testEnv.Start()
 	Expect(err).NotTo(HaveOccurred())
 	Expect(cfg).NotTo(BeNil())
 

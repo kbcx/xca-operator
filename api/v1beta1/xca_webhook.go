@@ -24,9 +24,9 @@ import (
 )
 
 // log is for logging in this package.
-var kbolog = logf.Log.WithName("kbo-resource")
+var xcalog = logf.Log.WithName("xca-resource")
 
-func (r *Kbo) SetupWebhookWithManager(mgr ctrl.Manager) error {
+func (r *Xca) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
 		Complete()
@@ -34,41 +34,41 @@ func (r *Kbo) SetupWebhookWithManager(mgr ctrl.Manager) error {
 
 // TODO(user): EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 
-//+kubebuilder:webhook:path=/mutate-apps-operator-kb-cx-v1beta1-kbo,mutating=true,failurePolicy=fail,sideEffects=None,groups=apps.operator.kb.cx,resources=kboes,verbs=create;update,versions=v1beta1,name=mkbo.kb.io,admissionReviewVersions=v1
+//+kubebuilder:webhook:path=/mutate-apps-xca-k8s-kb-cx-v1beta1-xca,mutating=true,failurePolicy=fail,sideEffects=None,groups=apps.xca.k8s.kb.cx,resources=xcas,verbs=create;update,versions=v1beta1,name=mxca.kb.io,admissionReviewVersions=v1
 
-var _ webhook.Defaulter = &Kbo{}
+var _ webhook.Defaulter = &Xca{}
 
 // Default implements webhook.Defaulter so a webhook will be registered for the type
-func (r *Kbo) Default() {
-	kbolog.Info("default", "name", r.Name)
+func (r *Xca) Default() {
+	xcalog.Info("default", "name", r.Name)
 
 	// TODO(user): fill in your defaulting logic.
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
-//+kubebuilder:webhook:path=/validate-apps-operator-kb-cx-v1beta1-kbo,mutating=false,failurePolicy=fail,sideEffects=None,groups=apps.operator.kb.cx,resources=kboes,verbs=create;update,versions=v1beta1,name=vkbo.kb.io,admissionReviewVersions=v1
+//+kubebuilder:webhook:path=/validate-apps-xca-k8s-kb-cx-v1beta1-xca,mutating=false,failurePolicy=fail,sideEffects=None,groups=apps.xca.k8s.kb.cx,resources=xcas,verbs=create;update,versions=v1beta1,name=vxca.kb.io,admissionReviewVersions=v1
 
-var _ webhook.Validator = &Kbo{}
+var _ webhook.Validator = &Xca{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *Kbo) ValidateCreate() error {
-	kbolog.Info("validate create", "name", r.Name)
+func (r *Xca) ValidateCreate() error {
+	xcalog.Info("validate create", "name", r.Name)
 
 	// TODO(user): fill in your validation logic upon object creation.
 	return nil
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *Kbo) ValidateUpdate(old runtime.Object) error {
-	kbolog.Info("validate update", "name", r.Name)
+func (r *Xca) ValidateUpdate(old runtime.Object) error {
+	xcalog.Info("validate update", "name", r.Name)
 
 	// TODO(user): fill in your validation logic upon object update.
 	return nil
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (r *Kbo) ValidateDelete() error {
-	kbolog.Info("validate delete", "name", r.Name)
+func (r *Xca) ValidateDelete() error {
+	xcalog.Info("validate delete", "name", r.Name)
 
 	// TODO(user): fill in your validation logic upon object deletion.
 	return nil

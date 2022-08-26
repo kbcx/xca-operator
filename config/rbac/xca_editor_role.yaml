@@ -1,13 +1,13 @@
-# permissions for end users to edit kboes.
+# permissions for end users to edit xcas.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: kbo-editor-role
+  name: xca-editor-role
 rules:
 - apiGroups:
-  - apps.operator.kb.cx
+  - apps.xca.k8s.kb.cx
   resources:
-  - kboes
+  - xcas
   verbs:
   - create
   - delete
@@ -17,8 +17,8 @@ rules:
   - update
   - watch
 - apiGroups:
-  - apps.operator.kb.cx
+  - apps.xca.k8s.kb.cx
   resources:
-  - kboes/status
+  - xcas/status
   verbs:
   - get
