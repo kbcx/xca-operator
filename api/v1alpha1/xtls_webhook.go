@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1beta1
+package v1alpha1
 
 import (
 	"k8s.io/apimachinery/pkg/runtime"
@@ -24,9 +24,9 @@ import (
 )
 
 // log is for logging in this package.
-var xcalog = logf.Log.WithName("xca-resource")
+var xtlslog = logf.Log.WithName("xtls-resource")
 
-func (r *Xca) SetupWebhookWithManager(mgr ctrl.Manager) error {
+func (r *Xtls) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
 		Complete()
@@ -34,41 +34,41 @@ func (r *Xca) SetupWebhookWithManager(mgr ctrl.Manager) error {
 
 // TODO(user): EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 
-//+kubebuilder:webhook:path=/mutate-apps-xca-k8s-kb-cx-v1beta1-xca,mutating=true,failurePolicy=fail,sideEffects=None,groups=apps.xca.k8s.kb.cx,resources=xcas,verbs=create;update,versions=v1beta1,name=mxca.kb.io,admissionReviewVersions=v1
+//+kubebuilder:webhook:path=/mutate-xca-kb-cx-v1alpha1-xtls,mutating=true,failurePolicy=fail,sideEffects=None,groups=xca.kb.cx,resources=xtls,verbs=create;update,versions=v1alpha1,name=mxtls.kb.io,admissionReviewVersions=v1
 
-var _ webhook.Defaulter = &Xca{}
+var _ webhook.Defaulter = &Xtls{}
 
 // Default implements webhook.Defaulter so a webhook will be registered for the type
-func (r *Xca) Default() {
-	xcalog.Info("default", "name", r.Name)
+func (r *Xtls) Default() {
+	xtlslog.Info("default", "name", r.Name)
 
 	// TODO(user): fill in your defaulting logic.
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
-//+kubebuilder:webhook:path=/validate-apps-xca-k8s-kb-cx-v1beta1-xca,mutating=false,failurePolicy=fail,sideEffects=None,groups=apps.xca.k8s.kb.cx,resources=xcas,verbs=create;update,versions=v1beta1,name=vxca.kb.io,admissionReviewVersions=v1
+//+kubebuilder:webhook:path=/validate-xca-kb-cx-v1alpha1-xtls,mutating=false,failurePolicy=fail,sideEffects=None,groups=xca.kb.cx,resources=xtls,verbs=create;update,versions=v1alpha1,name=vxtls.kb.io,admissionReviewVersions=v1
 
-var _ webhook.Validator = &Xca{}
+var _ webhook.Validator = &Xtls{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *Xca) ValidateCreate() error {
-	xcalog.Info("validate create", "name", r.Name)
+func (r *Xtls) ValidateCreate() error {
+	xtlslog.Info("validate create", "name", r.Name)
 
 	// TODO(user): fill in your validation logic upon object creation.
 	return nil
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *Xca) ValidateUpdate(old runtime.Object) error {
-	xcalog.Info("validate update", "name", r.Name)
+func (r *Xtls) ValidateUpdate(old runtime.Object) error {
+	xtlslog.Info("validate update", "name", r.Name)
 
 	// TODO(user): fill in your validation logic upon object update.
 	return nil
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (r *Xca) ValidateDelete() error {
-	xcalog.Info("validate delete", "name", r.Name)
+func (r *Xtls) ValidateDelete() error {
+	xtlslog.Info("validate delete", "name", r.Name)
 
 	// TODO(user): fill in your validation logic upon object deletion.
 	return nil

@@ -1,8 +1,12 @@
 # xca-operator
-// TODO(user): Add simple overview of use/purpose
+
+[![build-test](https://github.com/kbcx/xca-operator/actions/workflows/workflow.yaml/badge.svg)](https://github.com/kbcx/xca-operator/actions/workflows/workflow.yaml)
+[![GoDoc](https://godoc.org/github.com/kbcx/xca-operator?status.svg)](https://pkg.go.dev/github.com/kbcx/xca-operator)
+[![Go Report Card](https://goreportcard.com/badge/github.com/kbcx/xca-operator)](https://goreportcard.com/report/github.com/kbcx/xca-operator)
 
 ## Description
-// TODO(user): An in-depth paragraph about your project and overview of use
+
+kubernetes operator for [x-ca](https://github.com/x-ca) tls, auto create tls secret by x-ca.
 
 ## Getting Started
 You’ll need a Kubernetes cluster to run against. You can use [KIND](https://sigs.k8s.io/kind) to get a local cluster for testing, or run against a remote cluster.
@@ -78,6 +82,7 @@ More information can be found via the [Kubebuilder Documentation](https://book.k
 
 ## License
 
+```
 Copyright 2022 xiexianbin.
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -91,3 +96,4 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+```

@@ -1,13 +1,13 @@
-# permissions for end users to edit xcas.
+# permissions for end users to edit xtls.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: xca-editor-role
+  name: xtls-editor-role
 rules:
 - apiGroups:
-  - apps.xca.k8s.kb.cx
+  - xca.kb.cx
   resources:
-  - xcas
+  - xtls
   verbs:
   - create
   - delete
@@ -17,8 +17,8 @@ rules:
   - update
   - watch
 - apiGroups:
-  - apps.xca.k8s.kb.cx
+  - xca.kb.cx
   resources:
-  - xcas/status
+  - xtls/status
   verbs:
   - get

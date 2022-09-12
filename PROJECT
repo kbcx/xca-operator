@@ -1,4 +1,4 @@
-domain: xca.k8s.kb.cx
+domain: kb.cx
 layout:
 - go.kubebuilder.io/v3
 projectName: xca-operator
@@ -8,11 +8,11 @@ resources:
     crdVersion: v1
     namespaced: true
   controller: true
-  domain: xca.k8s.kb.cx
-  group: apps
-  kind: Xca
-  path: github.com/kbcx/xca-operator/api/v1beta1
-  version: v1beta1
+  domain: kb.cx
+  group: xca
+  kind: Xtls
+  path: github.com/kbcx/xca-operator/api/v1alpha1
+  version: v1alpha1
   webhooks:
     defaulting: true
     validation: true

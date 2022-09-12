@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1beta1
+package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -23,44 +23,42 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// XcaSpec defines the desired state of Xca
-type XcaSpec struct {
+// XtlsSpec defines the desired state of Xtls
+type XtlsSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of Xca. Edit xca_types.go to remove/update
+	// Foo is an example field of Xtls. Edit xtls_types.go to remove/update
 	Foo string `json:"foo,omitempty"`
 }
 
-// XcaStatus defines the observed state of Xca
-type XcaStatus struct {
+// XtlsStatus defines the observed state of Xtls
+type XtlsStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	Active         bool         `json:"active,omitempty"`
-	LastUpdateTime *metav1.Time `json:"last_update_time"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// Xca is the Schema for the xcas API
-type Xca struct {
+// Xtls is the Schema for the xtls API
+type Xtls struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   XcaSpec   `json:"spec,omitempty"`
-	Status XcaStatus `json:"status,omitempty"`
+	Spec   XtlsSpec   `json:"spec,omitempty"`
+	Status XtlsStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 
-// XcaList contains a list of Xca
-type XcaList struct {
+// XtlsList contains a list of Xtls
+type XtlsList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []Xca `json:"items"`
+	Items           []Xtls `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&Xca{}, &XcaList{})
+	SchemeBuilder.Register(&Xtls{}, &XtlsList{})
 }

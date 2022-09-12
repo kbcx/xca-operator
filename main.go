@@ -31,7 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	appsv1beta1 "github.com/kbcx/xca-operator/api/v1beta1"
+	xcav1alpha1 "github.com/kbcx/xca-operator/api/v1alpha1"
 	"github.com/kbcx/xca-operator/controllers"
 	//+kubebuilder:scaffold:imports
 )
@@ -44,7 +44,7 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
-	utilruntime.Must(appsv1beta1.AddToScheme(scheme))
+	utilruntime.Must(xcav1alpha1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
@@ -71,7 +71,7 @@ func main() {
 		Port:                   9443,
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
-		LeaderElectionID:       "0f832e96.xca.k8s.kb.cx",
+		LeaderElectionID:       "0f832e96.kb.cx",
 		// LeaderElectionReleaseOnCancel defines if the leader should step down voluntarily
 		// when the Manager ends. This requires the binary to immediately end when the
 		// Manager is stopped, otherwise, this setting is unsafe. Setting this significantly
@@ -89,15 +89,15 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controllers.XcaReconciler{
+	if err = (&controllers.XtlsReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Xca")
+		setupLog.Error(err, "unable to create controller", "controller", "Xtls")
 		os.Exit(1)
 	}
-	if err = (&appsv1beta1.Xca{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "Xca")
+	if err = (&xcav1alpha1.Xtls{}).SetupWebhookWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "Xtls")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder
