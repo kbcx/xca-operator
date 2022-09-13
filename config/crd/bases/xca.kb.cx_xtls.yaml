@@ -40,6 +40,7 @@ spec:
                   remove/update Foo string `json:"foo,omitempty"`
                 type: string
               days:
+                format: int64
                 type: integer
               domains:
                 items:
@@ -50,13 +51,11 @@ spec:
                   type: string
                 type: array
               keyBits:
+                format: int64
                 type: integer
             required:
             - cn
-            - days
             - domains
-            - ips
-            - keyBits
             type: object
           status:
             description: XtlsStatus defines the observed state of Xtls
@@ -66,12 +65,12 @@ spec:
                   of cluster Important: Run "make" to regenerate code after modifying
                   this file'
                 type: boolean
-              last_uptate_time:
+              lastRequestTime:
                 format: date-time
                 type: string
-            required:
-            - active
-            - last_uptate_time
+              lastUpdateTime:
+                format: date-time
+                type: string
             type: object
         type: object
     served: true

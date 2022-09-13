@@ -32,17 +32,21 @@ type XtlsSpec struct {
 	// Foo string `json:"foo,omitempty"`
 	CN      string   `json:"cn"`
 	Domains []string `json:"domains"`
-	IPs     []string `json:"ips"`
-	Days    int      `json:"days"`
-	KeyBits int      `json:"keyBits"`
+	IPs     []string `json:"ips,omitempty"`
+
+	// +kubebuilder:validation:Max=10000
+	// +kubebuilder:validation:Min=1
+	Days    int64 `json:"days,omitempty"`
+	KeyBits int64 `json:"keyBits,omitempty"`
 }
 
 // XtlsStatus defines the observed state of Xtls
 type XtlsStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-	Active         bool         `json:"active"`
-	LastUptateTime *metav1.Time `json:"last_uptate_time"`
+	Active          bool         `json:"active,omitempty"`
+	LastRequestTime *metav1.Time `json:"lastRequestTime,omitempty"`
+	LastUpdateTime  *metav1.Time `json:"lastUpdateTime,omitempty"`
 }
 
 //+kubebuilder:object:root=true

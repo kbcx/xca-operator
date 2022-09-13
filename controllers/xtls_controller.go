@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"crypto/x509"
 	"fmt"
 	"strings"
 	"time"
@@ -48,6 +49,8 @@ type XtlsReconciler struct {
 //+kubebuilder:rbac:groups=xca.kb.cx,resources=xtls,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=xca.kb.cx,resources=xtls/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=xca.kb.cx,resources=xtls/finalizers,verbs=update
+//+kubebuilder:rbac:groups=batch,resources=secret,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=batch,resources=secret/status,verbs=get
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -60,9 +63,15 @@ type XtlsReconciler struct {
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.12.2/pkg/reconcile
 func (r *XtlsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
+	var (
+		err       error
+		obj       xcav1alpha1.Xtls
+		secret    v1.Secret
+		newSecret *v1.Secret
+		cert      *x509.Certificate
+	)
 
 	// 1. check resource exist
-	var obj xcav1alpha1.Xtls
 	if err := r.Get(ctx, req.NamespacedName, &obj); err != nil {
 		if errors.IsNotFound(err) {
 			logger.Info("Xtls obj not found")
@@ -75,25 +84,29 @@ func (r *XtlsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	logger.Info("fetch Xtls obj from kube-apiserver success")
 
 	// 2. check Secret resource
-	secretObj := types.NamespacedName{
+	secretObjKey := types.NamespacedName{
 		Namespace: req.Namespace,
 		Name:      strings.Replace(req.Name, "*", "_", 1),
 	}
-	var secret *v1.Secret
-	if err := r.Get(ctx, secretObj, secret); err != nil {
+	if err = r.Get(ctx, secretObjKey, &secret); err != nil {
 		if errors.IsNotFound(err) {
 			// 2.1 not create, do create Xtls obj
-			logger.Info("Call x-ca GRPC API to create Xtls ...", "secretObj", secretObj)
-			if secret, err = r.NewTLSSecret(ctx, obj, nil); err != nil {
+			logger.Info("Call x-ca GRPC API to create Xtls ...", "secretObjKey", secretObjKey)
+			if newSecret, err = r.NewTLSSecret(ctx, obj, nil); err != nil {
 				logger.Error(err, "create new Secret err", "Xtls", obj)
 				return ctrl.Result{}, err
 			} else {
-				logger.Info("create new Secret success", "Secret", secret)
+				logger.Info("create new Secret success", "Secret", newSecret)
+				obj.Status.LastRequestTime = &metav1.Time{Time: time.Now()}
+				if err = r.UpdateXtlsStatus(ctx, &obj); err != nil {
+					logger.Error(err, "update Xtls status err")
+					return ctrl.Result{}, err
+				}
 				return ctrl.Result{}, nil
 			}
 		} else {
 			// 2.2 call kube-apiserver err
-			logger.Error(err, "fetch Secret err", "secretObj", secretObj)
+			logger.Error(err, "fetch Secret err", "secretObjKey", secretObjKey)
 			return ctrl.Result{}, err
 		}
 	}
@@ -104,12 +117,12 @@ func (r *XtlsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 	if secret.Type != v1.SecretTypeTLS {
 		msg := fmt.Sprintf("secret name %s is already exist, but type is %s, expect type is %s",
 			secret.Name, secret.Type, v1.SecretTypeTLS)
-		err := errors.NewBadRequest(msg)
+		err = errors.NewBadRequest(msg)
 		logger.Error(err, "found wrong Type secret")
 		return ctrl.Result{}, errors.NewConflict(schema.GroupResource{Group: "kubernetes.io", Resource: "tls"}, secret.Name, err)
 	}
 
-	cert, err := utils.ParseCert(secret.Data["tls.crt"])
+	cert, err = utils.ParseCert(secret.Data["tls.crt"])
 	if err != nil {
 		logger.Error(err, "parse cert error")
 		return ctrl.Result{}, err
@@ -132,37 +145,41 @@ func (r *XtlsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		reGenerateCertFlag = true
 	}
 	if reGenerateCertFlag {
-		if secret, err = r.NewTLSSecret(ctx, obj, secret); err != nil {
+		if newSecret, err = r.NewTLSSecret(ctx, obj, &secret); err != nil {
 			logger.Error(err, "re-generate new Secret err", "Xtls", obj, "secretName", secret.Name)
 			return ctrl.Result{}, err
 		}
+		logger.Info("re-generate new Secret success", "Secret", newSecret)
+		obj.Status.LastRequestTime = &metav1.Time{Time: time.Now()}
 	}
 
-	obj.Status.Active = true
-	obj.Status.LastUptateTime = &metav1.Time{Time: time.Now()}
-	if err := r.Status().Update(ctx, &obj); err != nil {
+	if err = r.UpdateXtlsStatus(ctx, &obj); err != nil {
 		logger.Error(err, "update Xtls status err")
+		return ctrl.Result{}, err
 	}
 
 	return ctrl.Result{}, nil
 }
 
-// SetupWithManager sets up the controller with the Manager.
-func (r *XtlsReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).
-		For(&xcav1alpha1.Xtls{}).
-		Complete(r)
+// UpdateXtlsStatus status
+func (r *XtlsReconciler) UpdateXtlsStatus(ctx context.Context, obj *xcav1alpha1.Xtls) error {
+	obj.Status.Active = true
+	obj.Status.LastUpdateTime = &metav1.Time{Time: time.Now()}
+	if err := r.Status().Update(ctx, obj); err != nil {
+		return err
+	}
+	return nil
 }
 
 // NewTLSSecret create new secret
 func (r *XtlsReconciler) NewTLSSecret(ctx context.Context, x xcav1alpha1.Xtls, secret *v1.Secret) (*v1.Secret, error) {
 	// 1. call X-CA GRPC API to create TLS
 	tlsReq := xcagrpc.TLSRequest{
-		CN:      "xiexianbin.cn",
-		Domains: []string{"xiexianbin.cn", "*.xiexianbin.cn"},
-		IPs:     []string{},
-		Days:    10,
-		KeyBits: 512,
+		CN:      x.Spec.CN,
+		Domains: x.Spec.Domains,
+		IPs:     x.Spec.IPs,
+		Days:    x.Spec.Days,
+		KeyBits: x.Spec.KeyBits,
 	}
 	tlsResp, err := r.XcaClient.Sign(r.XcaContext, &tlsReq)
 	if err != nil {
@@ -199,4 +216,11 @@ func (r *XtlsReconciler) NewTLSSecret(ctx context.Context, x xcav1alpha1.Xtls, s
 		}
 		return secret, nil
 	}
+}
+
+// SetupWithManager sets up the controller with the Manager.
+func (r *XtlsReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	return ctrl.NewControllerManagedBy(mgr).
+		For(&xcav1alpha1.Xtls{}).
+		Complete(r)
 }
