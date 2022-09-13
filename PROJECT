@@ -1,18 +1,18 @@
-domain: operator.kb.cx
+domain: kb.cx
 layout:
 - go.kubebuilder.io/v3
-projectName: kb-operator
-repo: github.com/kbcx/operator
+projectName: xca-operator
+repo: github.com/kbcx/xca-operator
 resources:
 - api:
     crdVersion: v1
     namespaced: true
   controller: true
-  domain: operator.kb.cx
-  group: apps
-  kind: Kbo
-  path: github.com/kbcx/operator/api/v1beta1
-  version: v1beta1
+  domain: kb.cx
+  group: xca
+  kind: Xtls
+  path: github.com/kbcx/xca-operator/api/v1alpha1
+  version: v1alpha1
   webhooks:
     defaulting: true
     validation: true
