@@ -35,10 +35,28 @@ spec:
           spec:
             description: XtlsSpec defines the desired state of Xtls
             properties:
-              foo:
+              cn:
                 description: Foo is an example field of Xtls. Edit xtls_types.go to
-                  remove/update
+                  remove/update Foo string `json:"foo,omitempty"`
                 type: string
+              days:
+                type: integer
+              domains:
+                items:
+                  type: string
+                type: array
+              ips:
+                items:
+                  type: string
+                type: array
+              keyBits:
+                type: integer
+            required:
+            - cn
+            - days
+            - domains
+            - ips
+            - keyBits
             type: object
           status:
             description: XtlsStatus defines the observed state of Xtls

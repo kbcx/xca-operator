@@ -29,7 +29,12 @@ type XtlsSpec struct {
 	// Important: Run "make" to regenerate code after modifying this file
 
 	// Foo is an example field of Xtls. Edit xtls_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// Foo string `json:"foo,omitempty"`
+	CN      string   `json:"cn"`
+	Domains []string `json:"domains"`
+	IPs     []string `json:"ips"`
+	Days    int      `json:"days"`
+	KeyBits int      `json:"keyBits"`
 }
 
 // XtlsStatus defines the observed state of Xtls

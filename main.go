@@ -96,9 +96,13 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Xtls")
 		os.Exit(1)
 	}
-	if err = (&xcav1alpha1.Xtls{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "Xtls")
-		os.Exit(1)
+
+	setupLog.Info("ENABLE_WEBHOOKS setting", "ENABLE_WEBHOOKS", os.Getenv("ENABLE_WEBHOOKS"))
+	if os.Getenv("ENABLE_WEBHOOKS") == "true" {
+		if err = (&xcav1alpha1.Xtls{}).SetupWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "Xtls")
+			os.Exit(1)
+		}
 	}
 	//+kubebuilder:scaffold:builder
 

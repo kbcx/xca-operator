@@ -4,3 +4,12 @@ metadata:
   name: xtls-sample
 spec:
   # TODO(user): Add fields here
+  cn: xiexianbin.cn
+  domains:
+    - xiexianbin.cn
+    - www.xiexianbin.cn
+  ips:
+    - 1.1.1.1
+    - 127.0.0.1
+  days: 365
+  keyBits: 2048
