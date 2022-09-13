@@ -219,8 +219,8 @@ func (r *XtlsReconciler) NewTLSSecret(ctx context.Context, x xcav1alpha1.Xtls, s
 				Name:      x.Name,
 				Namespace: x.Namespace,
 				Labels: map[string]string{
-					"creatorBy": "xca-operator",
-					"createAt":  now.Rfc3339Copy().String(),
+					"creatorBy":  "xca-operator",
+					"createAtms": strconv.FormatInt(now.UnixMilli(), 10),
 				},
 			},
 			Type: v1.SecretTypeTLS,
