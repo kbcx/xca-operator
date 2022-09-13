@@ -12,6 +12,8 @@ kubernetes operator for [x-ca](https://github.com/x-ca) tls, auto create tls sec
 You’ll need a Kubernetes cluster to run against. You can use [KIND](https://sigs.k8s.io/kind) to get a local cluster for testing, or run against a remote cluster.
 **Note:** Your controller will automatically use the current context in your kubeconfig file (i.e. whatever cluster `kubectl cluster-info` shows).
 
+[kubebuilder 使用 FaQ](https://www.xiexianbin.cn/kubernetes/dev/kubebuilder-faq/)
+
 ### Running on the cluster
 1. Install Instances of Custom Resources:
 
