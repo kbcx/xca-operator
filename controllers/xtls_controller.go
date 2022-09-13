@@ -22,6 +22,7 @@ import (
 	"strings"
 	"time"
 
+	xcagrpc "github.com/x-ca/go-grpc-api/grpc"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,7 +40,9 @@ import (
 // XtlsReconciler reconciles a Xtls object
 type XtlsReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
+	Scheme     *runtime.Scheme
+	XcaClient  xcagrpc.ServiceClient
+	XcaContext context.Context
 }
 
 //+kubebuilder:rbac:groups=xca.kb.cx,resources=xtls,verbs=get;list;watch;create;update;patch;delete
@@ -76,16 +79,18 @@ func (r *XtlsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		Namespace: req.Namespace,
 		Name:      strings.Replace(req.Name, "*", "_", 1),
 	}
-	var secret v1.Secret
-	if err := r.Get(ctx, secretObj, &secret); err != nil {
+	var secret *v1.Secret
+	if err := r.Get(ctx, secretObj, secret); err != nil {
 		if errors.IsNotFound(err) {
 			// 2.1 not create, do create Xtls obj
 			logger.Info("Call x-ca GRPC API to create Xtls ...", "secretObj", secretObj)
-			if _, err := r.NewSecret(ctx, obj); err != nil {
+			if secret, err = r.NewTLSSecret(ctx, obj, nil); err != nil {
 				logger.Error(err, "create new Secret err", "Xtls", obj)
 				return ctrl.Result{}, err
+			} else {
+				logger.Info("create new Secret success", "Secret", secret)
+				return ctrl.Result{}, nil
 			}
-			return ctrl.Result{}, nil
 		} else {
 			// 2.2 call kube-apiserver err
 			logger.Error(err, "fetch Secret err", "secretObj", secretObj)
@@ -103,27 +108,41 @@ func (r *XtlsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		logger.Error(err, "found wrong Type secret")
 		return ctrl.Result{}, errors.NewConflict(schema.GroupResource{Group: "kubernetes.io", Resource: "tls"}, secret.Name, err)
 	}
-	// 3.2 check secret expire time
+
 	cert, err := utils.ParseCert(secret.Data["tls.crt"])
 	if err != nil {
 		logger.Error(err, "parse cert error")
 		return ctrl.Result{}, err
 	}
-	// <= 10 days, regenerate cert
-	if cert.NotAfter.After(time.Now().Add(10 * 24 * time.Hour)) {
+	var certIPs []string
+	for _, ip := range cert.IPAddresses {
+		certIPs = append(certIPs, ip.String())
+	}
+	reGenerateCertFlag := false
+	if cert.NotAfter.After(time.Now().Add(10 * 24 * time.Hour)) { // 3.2 check secret expire time, <= 10 days, regenerate cert
 		logger.Info("cert will expire at %s, re-generate new cert", cert.NotAfter)
-		if _, err := r.NewSecret(ctx, obj); err != nil {
-			logger.Error(err, "re-generate new Secret err", "Xtls", obj)
+		reGenerateCertFlag = true
+	} else if utils.IsMatch(obj.Spec.Domains, cert.DNSNames) == false { // 3.3 check cert Domains
+		logger.Info("cert Domains is not match, cert Domains is %s, Xtls Domains is %s, re-generate new cert",
+			cert.DNSNames, obj.Spec.Domains)
+		reGenerateCertFlag = true
+	} else if utils.IsMatch(obj.Spec.IPs, certIPs) == false { // 3.3 check cert IPs
+		logger.Info("cert IPs is not match, cert IPs is %s, Xtls IPs is %s, re-generate new cert",
+			cert.IPAddresses, obj.Spec.IPs)
+		reGenerateCertFlag = true
+	}
+	if reGenerateCertFlag {
+		if secret, err = r.NewTLSSecret(ctx, obj, secret); err != nil {
+			logger.Error(err, "re-generate new Secret err", "Xtls", obj, "secretName", secret.Name)
 			return ctrl.Result{}, err
 		}
-		return ctrl.Result{}, nil
 	}
 
-	//obj.Status.Active = true
-	//obj.Status.LastUptateTime = &metav1.Time{Time: time.Now()}
-	//if err := r.Status().Update(ctx, &obj); err != nil {
-	//	logger.Error(err, "update object status err", obj.Name, "namespace", obj.Namespace)
-	//}
+	obj.Status.Active = true
+	obj.Status.LastUptateTime = &metav1.Time{Time: time.Now()}
+	if err := r.Status().Update(ctx, &obj); err != nil {
+		logger.Error(err, "update Xtls status err")
+	}
 
 	return ctrl.Result{}, nil
 }
@@ -135,27 +154,49 @@ func (r *XtlsReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-// NewSecret create new secret
-func (r *XtlsReconciler) NewSecret(ctx context.Context, x xcav1alpha1.Xtls) (*v1.Secret, error) {
-	labels := map[string]string{
-		"creator": "xca-operator",
+// NewTLSSecret create new secret
+func (r *XtlsReconciler) NewTLSSecret(ctx context.Context, x xcav1alpha1.Xtls, secret *v1.Secret) (*v1.Secret, error) {
+	// 1. call X-CA GRPC API to create TLS
+	tlsReq := xcagrpc.TLSRequest{
+		CN:      "xiexianbin.cn",
+		Domains: []string{"xiexianbin.cn", "*.xiexianbin.cn"},
+		IPs:     []string{},
+		Days:    10,
+		KeyBits: 512,
 	}
-	data := map[string][]byte{
-		"tls.crt": []byte(""),
-		"tls.key": []byte(""),
-	}
-	secret := &v1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      x.Name,
-			Namespace: x.Namespace,
-			Labels:    labels,
-		},
-		Type: v1.SecretTypeTLS,
-		Data: data,
-	}
-
-	if err := r.Create(ctx, secret); err != nil {
+	tlsResp, err := r.XcaClient.Sign(r.XcaContext, &tlsReq)
+	if err != nil {
 		return nil, err
 	}
-	return secret, nil
+
+	certData := map[string][]byte{
+		"tls.crt": []byte(tlsResp.Cert),
+		"tls.key": []byte(tlsResp.Key),
+	}
+	now := metav1.Now().Rfc3339Copy()
+	if secret != nil {
+		secret.ObjectMeta.Labels["update_at"] = now.String()
+		secret.Data = certData
+		if err := r.Update(ctx, secret); err != nil {
+			return nil, err
+		}
+		return secret, nil
+	} else {
+		secret = &v1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      x.Name,
+				Namespace: x.Namespace,
+				Labels: map[string]string{
+					"creator":   "xca-operator",
+					"create_at": now.String(),
+				},
+			},
+			Type: v1.SecretTypeTLS,
+			Data: certData,
+		}
+		if err := r.Create(ctx, secret); err != nil {
+			return nil, err
+		}
+		return secret, nil
+	}
 }

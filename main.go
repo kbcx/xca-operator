@@ -24,6 +24,7 @@ import (
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
+	xcaclient "github.com/x-ca/go-grpc-api/client"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -52,6 +53,10 @@ func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
+	var xcaGRPCAddr string
+	var xcaGRPCToken string
+	flag.StringVar(&xcaGRPCAddr, "xca-grpc-address", "127.0.0.1:8000", "The address of X-CA https://github.com/x-ca/go-grpc-api.")
+	flag.StringVar(&xcaGRPCToken, "xca-grpc-token", "", "X-CA GRPC API Auth token.")
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
@@ -89,9 +94,17 @@ func main() {
 		os.Exit(1)
 	}
 
+	caClient, caCtx, err := xcaclient.Client(xcaGRPCAddr)
+	if err != nil {
+		setupLog.Error(err, "init X-CA GRPC API Client fail")
+		os.Exit(1)
+	}
+
 	if err = (&controllers.XtlsReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:     mgr.GetClient(),
+		Scheme:     mgr.GetScheme(),
+		XcaClient:  caClient,
+		XcaContext: caCtx,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Xtls")
 		os.Exit(1)

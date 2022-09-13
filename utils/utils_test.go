@@ -47,3 +47,11 @@ func TestParseCert(t *testing.T) {
 			cert.DNSNames, cert.IPAddresses, cert.NotAfter, cert.Subject)
 	}
 }
+
+func TestIsMatch(t *testing.T) {
+	a := []string{"a", "b", "c"}
+	b := []string{"a", "c", "b"}
+	if IsMatch(a, b) == false {
+		t.Fatal("wrong match")
+	}
+}

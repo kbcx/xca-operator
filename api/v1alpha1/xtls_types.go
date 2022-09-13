@@ -41,6 +41,8 @@ type XtlsSpec struct {
 type XtlsStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
+	Active         bool         `json:"active"`
+	LastUptateTime *metav1.Time `json:"last_uptate_time"`
 }
 
 //+kubebuilder:object:root=true
