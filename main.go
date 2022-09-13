@@ -24,7 +24,6 @@ import (
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
-	xcaclient "github.com/x-ca/go-grpc-api/client"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -94,17 +93,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	caClient, caCtx, err := xcaclient.Client(xcaGRPCAddr)
-	if err != nil {
-		setupLog.Error(err, "init X-CA GRPC API Client fail")
-		os.Exit(1)
-	}
-
 	if err = (&controllers.XtlsReconciler{
-		Client:     mgr.GetClient(),
-		Scheme:     mgr.GetScheme(),
-		XcaClient:  caClient,
-		XcaContext: caCtx,
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+		XcaConf: controllers.XCAConf{
+			Addr:  xcaGRPCAddr,
+			Token: xcaGRPCToken,
+		},
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Xtls")
 		os.Exit(1)

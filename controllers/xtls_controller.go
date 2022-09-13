@@ -20,9 +20,11 @@ import (
 	"context"
 	"crypto/x509"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
+	xcaclient "github.com/x-ca/go-grpc-api/client"
 	xcagrpc "github.com/x-ca/go-grpc-api/grpc"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -38,12 +40,16 @@ import (
 	"github.com/kbcx/xca-operator/utils"
 )
 
+type XCAConf struct {
+	Addr  string
+	Token string
+}
+
 // XtlsReconciler reconciles a Xtls object
 type XtlsReconciler struct {
 	client.Client
-	Scheme     *runtime.Scheme
-	XcaClient  xcagrpc.ServiceClient
-	XcaContext context.Context
+	Scheme  *runtime.Scheme
+	XcaConf XCAConf
 }
 
 //+kubebuilder:rbac:groups=xca.kb.cx,resources=xtls,verbs=get;list;watch;create;update;patch;delete
@@ -132,21 +138,23 @@ func (r *XtlsReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.
 		certIPs = append(certIPs, ip.String())
 	}
 	reGenerateCertFlag := false
-	if cert.NotAfter.After(time.Now().Add(10 * 24 * time.Hour)) { // 3.2 check secret expire time, <= 10 days, regenerate cert
-		logger.Info("cert will expire at %s, re-generate new cert", cert.NotAfter)
+	if cert.NotAfter.Before(time.Now().Add(10 * 24 * time.Hour)) { // 3.2 check secret expire time, <= 10 days, regenerate cert
+		logger.Info("cert will expire, re-generate new cert",
+			"certNotAfter", metav1.NewTime(cert.NotAfter).Rfc3339Copy(),
+			"now", metav1.Now().Rfc3339Copy())
 		reGenerateCertFlag = true
 	} else if utils.IsMatch(obj.Spec.Domains, cert.DNSNames) == false { // 3.3 check cert Domains
-		logger.Info("cert Domains is not match, cert Domains is %s, Xtls Domains is %s, re-generate new cert",
-			cert.DNSNames, obj.Spec.Domains)
+		logger.Info("Domains is not match, re-generate new cert",
+			"SecretDomains", cert.DNSNames, "XtlsDomains", obj.Spec.Domains)
 		reGenerateCertFlag = true
 	} else if utils.IsMatch(obj.Spec.IPs, certIPs) == false { // 3.3 check cert IPs
-		logger.Info("cert IPs is not match, cert IPs is %s, Xtls IPs is %s, re-generate new cert",
-			cert.IPAddresses, obj.Spec.IPs)
+		logger.Info("cert IPs is not match, re-generate new cert",
+			"SecretIPs", cert.IPAddresses, "XtlsIPs", obj.Spec.IPs)
 		reGenerateCertFlag = true
 	}
 	if reGenerateCertFlag {
 		if newSecret, err = r.NewTLSSecret(ctx, obj, &secret); err != nil {
-			logger.Error(err, "re-generate new Secret err", "Xtls", obj, "secretName", secret.Name)
+			logger.Error(err, "re-generate new Secret err", "XtlsObj", obj, "secretName", secret.Name)
 			return ctrl.Result{}, err
 		}
 		logger.Info("re-generate new Secret success", "Secret", newSecret)
@@ -174,6 +182,10 @@ func (r *XtlsReconciler) UpdateXtlsStatus(ctx context.Context, obj *xcav1alpha1.
 // NewTLSSecret create new secret
 func (r *XtlsReconciler) NewTLSSecret(ctx context.Context, x xcav1alpha1.Xtls, secret *v1.Secret) (*v1.Secret, error) {
 	// 1. call X-CA GRPC API to create TLS
+	xcaClient, xcaCtx, err := xcaclient.Client(r.XcaConf.Addr)
+	if err != nil {
+		return nil, fmt.Errorf("init X-CA GRPC API Client fail %s", err.Error())
+	}
 	tlsReq := xcagrpc.TLSRequest{
 		CN:      x.Spec.CN,
 		Domains: x.Spec.Domains,
@@ -181,7 +193,7 @@ func (r *XtlsReconciler) NewTLSSecret(ctx context.Context, x xcav1alpha1.Xtls, s
 		Days:    x.Spec.Days,
 		KeyBits: x.Spec.KeyBits,
 	}
-	tlsResp, err := r.XcaClient.Sign(r.XcaContext, &tlsReq)
+	tlsResp, err := xcaClient.Sign(xcaCtx, &tlsReq)
 	if err != nil {
 		return nil, err
 	}
@@ -190,9 +202,12 @@ func (r *XtlsReconciler) NewTLSSecret(ctx context.Context, x xcav1alpha1.Xtls, s
 		"tls.crt": []byte(tlsResp.Cert),
 		"tls.key": []byte(tlsResp.Key),
 	}
-	now := metav1.Now().Rfc3339Copy()
+	now := metav1.Now()
 	if secret != nil {
-		secret.ObjectMeta.Labels["update_at"] = now.String()
+		if secret.ObjectMeta.Labels == nil {
+			secret.ObjectMeta.Labels = map[string]string{}
+		}
+		secret.ObjectMeta.Labels["updateAtMs"] = strconv.FormatInt(now.UnixMilli(), 10)
 		secret.Data = certData
 		if err := r.Update(ctx, secret); err != nil {
 			return nil, err
@@ -204,8 +219,8 @@ func (r *XtlsReconciler) NewTLSSecret(ctx context.Context, x xcav1alpha1.Xtls, s
 				Name:      x.Name,
 				Namespace: x.Namespace,
 				Labels: map[string]string{
-					"creator":   "xca-operator",
-					"create_at": now.String(),
+					"creatorBy": "xca-operator",
+					"createAt":  now.Rfc3339Copy().String(),
 				},
 			},
 			Type: v1.SecretTypeTLS,
